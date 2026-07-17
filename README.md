@@ -22,6 +22,32 @@ LocalLaunch does not know about applications. It receives an executable path, ar
 
 ## Install
 
+### Recommended (curl install script)
+
+macOS/Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rhymn/locallaunch/main/scripts/install.sh | bash
+```
+
+Install a specific version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rhymn/locallaunch/main/scripts/install.sh | VERSION=0.1.0 bash
+```
+
+The installer:
+
+- Downloads the release binary for your OS/architecture
+- Installs it to a user-local location
+- Registers LocalLaunch as a background service that starts automatically after restart/login
+
+### Windows (PowerShell)
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/rhymn/locallaunch/main/scripts/install.ps1 | iex
+```
+
 ### From source
 
 ```bash
