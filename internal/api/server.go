@@ -13,7 +13,7 @@ import (
 	"locallaunch/internal/process"
 )
 
-const version = "0.1.0"
+const version = "0.1.1"
 
 type Server struct {
 	cfg    *config.Config

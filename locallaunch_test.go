@@ -21,8 +21,8 @@ func TestTokenGeneration(t *testing.T) {
 		t.Fatalf("Generate() error = %v", err)
 	}
 
-	if len(token) != 64 {
-		t.Errorf("token length = %d, want 64 (32 bytes hex)", len(token))
+	if len(token) != 32 {
+		t.Errorf("token length = %d, want 32 (16 bytes hex)", len(token))
 	}
 
 	for _, c := range token {
@@ -73,8 +73,8 @@ func TestConfigCreation(t *testing.T) {
 		t.Error("Token should not be empty")
 	}
 
-	if len(cfg.Token) != 64 {
-		t.Errorf("Token length = %d, want 64", len(cfg.Token))
+	if len(cfg.Token) != 32 {
+		t.Errorf("Token length = %d, want 32", len(cfg.Token))
 	}
 
 	info, err := os.Stat(dir)

@@ -3,6 +3,8 @@ package process
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
+	"strings"
 )
 
 type Request struct {
@@ -16,7 +18,15 @@ func Launch(req *Request) (int, error) {
 		return 0, fmt.Errorf("path is required")
 	}
 
-	cmd := exec.Command(req.Path, req.Args...)
+	var cmd *exec.Cmd
+
+	if runtime.GOOS == "darwin" && strings.HasSuffix(req.Path, ".app") {
+		args := append([]string{req.Path}, req.Args...)
+		cmd = exec.Command("open", args...)
+	} else {
+		cmd = exec.Command(req.Path, req.Args...)
+	}
+
 	if req.Cwd != "" {
 		cmd.Dir = req.Cwd
 	}

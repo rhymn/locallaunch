@@ -2,7 +2,8 @@
 set -euo pipefail
 
 VERSION="${VERSION:-latest}"
-INSTALL_DIR="$HOME/Library/Application Support/LocalLaunch"
+CONFIG_DIR="$HOME/Library/Application Support/locallaunch"
+BIN_DIR="/usr/local/bin"
 PLIST_DIR="$HOME/Library/LaunchAgents"
 PLIST_NAME="com.locallaunch.plist"
 BINARY_NAME="locallaunch"
@@ -64,7 +65,8 @@ if [ "$ARCH" = "unsupported" ]; then
 fi
 
 if [ "$OS" = "linux" ]; then
-    INSTALL_DIR="$HOME/.local/share/locallaunch"
+    BIN_DIR="$HOME/.local/bin"
+    CONFIG_DIR="$HOME/.config/locallaunch"
 fi
 
 require_command curl
@@ -72,7 +74,18 @@ INSTALL_VERSION="$(resolve_version)"
 
 echo "Installing LocalLaunch v${INSTALL_VERSION} (${OS}/${ARCH})..."
 
-mkdir -p "$INSTALL_DIR"
+mkdir -p "$CONFIG_DIR"
+
+if [ ! -d "$BIN_DIR" ]; then
+    mkdir -p "$BIN_DIR"
+    case ":$PATH:" in
+        *":$BIN_DIR:"*) ;;
+        *) echo ""
+           echo "NOTE: $BIN_DIR is not in your PATH."
+           echo "Add this to your shell profile:"
+           echo "  export PATH=\"$BIN_DIR:\$PATH\"" ;;
+    esac
+fi
 
 BINARY_URL="${REPO_URL}/releases/download/v${INSTALL_VERSION}/locallaunch-${OS}-${ARCH}"
 
@@ -82,9 +95,9 @@ TMP_BINARY="$TMP_DIR/$BINARY_NAME"
 
 echo "Downloading from: ${BINARY_URL}"
 curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 "$BINARY_URL" -o "$TMP_BINARY"
-install -m 0755 "$TMP_BINARY" "$INSTALL_DIR/$BINARY_NAME"
+install -m 0755 "$TMP_BINARY" "$BIN_DIR/$BINARY_NAME"
 
-echo "Binary installed to: $INSTALL_DIR/$BINARY_NAME"
+echo "Binary installed to: $BIN_DIR/$BINARY_NAME"
 
 if [ "$OS" = "darwin" ]; then
     require_command launchctl
@@ -98,7 +111,7 @@ if [ "$OS" = "darwin" ]; then
     <string>com.locallaunch</string>
     <key>ProgramArguments</key>
     <array>
-        <string>${INSTALL_DIR}/${BINARY_NAME}</string>
+        <string>${BIN_DIR}/${BINARY_NAME}</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -128,7 +141,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${INSTALL_DIR}/${BINARY_NAME}
+ExecStart=${BIN_DIR}/${BINARY_NAME}
 Restart=on-failure
 RestartSec=5
 
@@ -143,9 +156,9 @@ fi
 
 echo ""
 echo "Installation complete!"
-echo "Config: $INSTALL_DIR/config.json"
+echo "Config: $CONFIG_DIR/config.json"
 echo ""
 echo "Usage:"
-echo "  $INSTALL_DIR/$BINARY_NAME           # Start server"
-echo "  $INSTALL_DIR/$BINARY_NAME token     # Show auth token"
-echo "  $INSTALL_DIR/$BINARY_NAME version   # Show version"
+echo "  $BINARY_NAME           # Start server"
+echo "  $BINARY_NAME token     # Show auth token"
+echo "  $BINARY_NAME version   # Show version"

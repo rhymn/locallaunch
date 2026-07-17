@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-const tokenLength = 32
+const tokenLength = 16
 
 func Generate() (string, error) {
 	b := make([]byte, tokenLength)
