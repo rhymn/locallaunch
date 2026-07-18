@@ -82,7 +82,13 @@ func Load() (*Config, error) {
 	if err == nil {
 		var cfg Config
 		if err := json.Unmarshal(data, &cfg); err != nil {
-			return nil, fmt.Errorf("parsing config: %w", err)
+			return nil, fmt.Errorf("parsing config %s: %w", cfgPath, err)
+		}
+		if cfg.Address == "" {
+			cfg.Address = defaultAddress
+		}
+		if cfg.Token == "" {
+			return nil, fmt.Errorf("config %s has empty token — delete the file and restart to regenerate", cfgPath)
 		}
 		return &cfg, nil
 	}

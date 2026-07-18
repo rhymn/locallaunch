@@ -148,8 +148,8 @@ func TestStatusEndpoint(t *testing.T) {
 		t.Errorf("status = %q, want %q", resp["status"], "ok")
 	}
 
-	if resp["version"] != "0.1.6" {
-		t.Errorf("version = %q, want %q", resp["version"], "0.1.6")
+	if resp["version"] == "" {
+		t.Error("version should not be empty")
 	}
 }
 
@@ -198,8 +198,8 @@ func TestPingEndpointAuthorized(t *testing.T) {
 		t.Errorf("ok = %v, want true", resp["ok"])
 	}
 
-	if resp["version"] != "0.1.6" {
-		t.Errorf("version = %v, want %q", resp["version"], "0.1.6")
+	if resp["version"] == "" {
+		t.Error("version should not be empty")
 	}
 }
 

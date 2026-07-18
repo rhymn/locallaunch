@@ -1,8 +1,9 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"log"
 	"net"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 	"kaddio-bridge/internal/process"
 )
 
-const version = "0.1.8"
+const version = "0.1.9"
 
 type Server struct {
 	cfg    *config.Config
@@ -59,20 +60,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mux.ServeHTTP(w, r)
 }
 
-func (s *Server) ListenAndServe() error {
-	ln, err := net.Listen("tcp", s.cfg.Address)
-	if err != nil {
-		return fmt.Errorf("listening on %s: %w", s.cfg.Address, err)
-	}
-
-	log.Printf("Listening:\n%s\n", s.cfg.Address)
-
+func (s *Server) Serve(ln net.Listener) error {
 	return s.server.Serve(ln)
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.server.Shutdown(ctx)
 }
 
 func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"ok":     false,
+			"error":  "method not allowed",
+		})
 		return
 	}
 
@@ -90,7 +93,12 @@ func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "error",
+			"error":  "method not allowed",
+		})
 		return
 	}
 
@@ -112,10 +120,20 @@ func (s *Server) handleProcess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MB limit
+
 	var req process.Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"started": false,
+				"error":   "request body too large",
+			})
+			return
+		}
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"started": false,
 			"error":   "invalid request body: " + err.Error(),

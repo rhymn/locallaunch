@@ -41,6 +41,11 @@ Invoke-WebRequest -Uri $BinaryUrl -OutFile "$InstallDir\$BinaryName"
 
 Write-Host "Binary installed to: $InstallDir\$BinaryName"
 
+# Stop any existing instance
+Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+Get-Process -Name "kaddio-bridge" -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 1
+
 $Action = New-ScheduledTaskAction -Execute "$InstallDir\$BinaryName"
 $Trigger = New-ScheduledTaskTrigger -AtLogon
 $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable

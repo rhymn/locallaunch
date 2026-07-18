@@ -92,6 +92,20 @@ install -m 0755 "$TMP_BINARY" "$BIN_DIR/$BINARY_NAME"
 
 echo "Binary installed to: $BIN_DIR/$BINARY_NAME"
 
+# Stop any existing instance and kill leftover processes
+if [ "$OS" = "darwin" ]; then
+    launchctl bootout "gui/$(id -u)/com.kaddio-bridge" 2>/dev/null || true
+fi
+pkill -f "$BIN_DIR/$BINARY_NAME" 2>/dev/null || true
+sleep 1
+
+# Generate config file by running the binary once, then kill it
+"$BIN_DIR/$BINARY_NAME" > /dev/null 2>&1 &
+BIN_PID=$!
+sleep 1
+kill "$BIN_PID" 2>/dev/null || true
+wait "$BIN_PID" 2>/dev/null || true
+
 if [ "$OS" = "darwin" ]; then
     require_command launchctl
     mkdir -p "$PLIST_DIR"
@@ -118,7 +132,6 @@ if [ "$OS" = "darwin" ]; then
 </plist>
 EOF
 
-    launchctl bootout "gui/$(id -u)/com.kaddio-bridge" 2>/dev/null || true
     launchctl bootstrap "gui/$(id -u)" "$PLIST_DIR/$PLIST_NAME"
     launchctl enable "gui/$(id -u)/com.kaddio-bridge"
     launchctl kickstart -k "gui/$(id -u)/com.kaddio-bridge"
@@ -150,11 +163,6 @@ fi
 echo ""
 echo "Installation complete!"
 echo ""
-
-# Ensure config file exists (creates it on first start)
-"$BIN_DIR/$BINARY_NAME" > /dev/null 2>&1 &
-sleep 1
-kill %1 2>/dev/null || true
 
 echo "Config file: $CONFIG_DIR/config.json"
 echo ""
