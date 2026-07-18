@@ -13,7 +13,7 @@ import (
 	"locallaunch/internal/process"
 )
 
-const version = "0.1.5"
+const version = "0.1.6"
 
 type Server struct {
 	cfg    *config.Config
@@ -28,6 +28,7 @@ func New(cfg *config.Config) *Server {
 	}
 
 	s.mux.HandleFunc("/api/v1/status", s.handleStatus)
+	s.mux.HandleFunc("/api/v1/ping", s.handlePing)
 	s.mux.HandleFunc("/api/v1/process", s.handleProcess)
 
 	s.server = &http.Server{
@@ -67,6 +68,21 @@ func (s *Server) ListenAndServe() error {
 	log.Printf("Listening:\n%s\n", s.cfg.Address)
 
 	return s.server.Serve(ln)
+}
+
+func (s *Server) handlePing(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if !s.authenticate(r) {
+		http.Error(w, `{"ok":false,"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {

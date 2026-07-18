@@ -148,8 +148,54 @@ func TestStatusEndpoint(t *testing.T) {
 		t.Errorf("status = %q, want %q", resp["status"], "ok")
 	}
 
-	if resp["version"] != "0.1.0" {
-		t.Errorf("version = %q, want %q", resp["version"], "0.1.0")
+	if resp["version"] != "0.1.6" {
+		t.Errorf("version = %q, want %q", resp["version"], "0.1.6")
+	}
+}
+
+func TestPingEndpointUnauthorized(t *testing.T) {
+	dir := t.TempDir()
+	os.Setenv("LOCALLAUNCH_CONFIG_DIR", dir)
+	defer os.Unsetenv("LOCALLAUNCH_CONFIG_DIR")
+
+	cfg, _ := config.Load()
+	srv := api.New(cfg)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ping", nil)
+	w := httptest.NewRecorder()
+
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestPingEndpointAuthorized(t *testing.T) {
+	dir := t.TempDir()
+	os.Setenv("LOCALLAUNCH_CONFIG_DIR", dir)
+	defer os.Unsetenv("LOCALLAUNCH_CONFIG_DIR")
+
+	cfg, _ := config.Load()
+	srv := api.New(cfg)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ping", nil)
+	req.Header.Set("Authorization", "Bearer "+cfg.Token)
+	w := httptest.NewRecorder()
+
+	srv.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusOK)
+	}
+
+	var resp map[string]bool
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode error: %v", err)
+	}
+
+	if !resp["ok"] {
+		t.Errorf("ok = %v, want true", resp["ok"])
 	}
 }
 
