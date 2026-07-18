@@ -3,7 +3,7 @@ set -euo pipefail
 
 VERSION="${VERSION:-latest}"
 CONFIG_DIR="$HOME/Library/Application Support/locallaunch"
-BIN_DIR="/usr/local/bin"
+BIN_DIR="$HOME/.local/bin"
 PLIST_DIR="$HOME/Library/LaunchAgents"
 PLIST_NAME="com.locallaunch.plist"
 BINARY_NAME="locallaunch"
@@ -65,7 +65,6 @@ if [ "$ARCH" = "unsupported" ]; then
 fi
 
 if [ "$OS" = "linux" ]; then
-    BIN_DIR="$HOME/.local/bin"
     CONFIG_DIR="$HOME/.config/locallaunch"
 fi
 
