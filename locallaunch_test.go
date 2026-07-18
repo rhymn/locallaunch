@@ -189,13 +189,17 @@ func TestPingEndpointAuthorized(t *testing.T) {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusOK)
 	}
 
-	var resp map[string]bool
+	var resp map[string]interface{}
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatalf("decode error: %v", err)
 	}
 
-	if !resp["ok"] {
+	if resp["ok"] != true {
 		t.Errorf("ok = %v, want true", resp["ok"])
+	}
+
+	if resp["version"] != "0.1.6" {
+		t.Errorf("version = %v, want %q", resp["version"], "0.1.6")
 	}
 }
 
